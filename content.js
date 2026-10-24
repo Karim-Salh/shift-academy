@@ -120,7 +120,7 @@ window.SITE_CONTENT = {
       "a": "عن طريق واتساب من أي زر في الموقع."
     }
   ],
-  "version": 24,
+  "version": 25,
   "banner": {
     "image": "uploads/mvmz2r3loq51.jpg",
     "fit": "cover",
@@ -132,7 +132,7 @@ window.SITE_CONTENT = {
   },
   "instructors": [
     {
-      "name": "",
+      "name": "كريم السعيد صالح ",
       "role": "مهندس ذكاء اصطناعي ومدرب",
       "bio": "",
       "image": "",
