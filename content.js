@@ -120,7 +120,7 @@ window.SITE_CONTENT = {
       "a": "عن طريق واتساب من أي زر في الموقع."
     }
   ],
-  "version": 34,
+  "version": 35,
   "banner": {
     "image": "uploads/mvmz2r3loq51.jpg",
     "fit": "cover",
@@ -139,9 +139,9 @@ window.SITE_CONTENT = {
       "areas": "بايثون، الذكاء الاصطناعي، أساسيات تطوير الويب، برمجة الأطفال",
       "philosophy": "نتعلم بالتطبيق، ونبسّط الفكرة قبل ما نعقدها.",
       "show": true,
-      "ix": 27,
-      "iy": 19,
-      "iz": 1.8
+      "ix": 100,
+      "iy": 25,
+      "iz": 1.45
     }
   ]
 };
