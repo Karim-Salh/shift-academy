@@ -120,7 +120,7 @@ window.SITE_CONTENT = {
       "a": "عن طريق واتساب من أي زر في الموقع."
     }
   ],
-  "version": 29,
+  "version": 30,
   "banner": {
     "image": "uploads/mvmz2r3loq51.jpg",
     "fit": "cover",
@@ -135,7 +135,7 @@ window.SITE_CONTENT = {
       "name": "كريم السعيد صالح | Karim El-Saeed Saleh",
       "role": "مهندس ذكاء اصطناعي ومدرب",
       "bio": "",
-      "image": "uploads/mvmzg38pms80.jpg",
+      "image": "uploads/mvmzgbsqifo7.jpg",
       "areas": "بايثون، الذكاء الاصطناعي، أساسيات تطوير الويب، برمجة الأطفال",
       "philosophy": "نتعلم بالتطبيق، ونبسّط الفكرة قبل ما نعقدها.",
       "show": true
