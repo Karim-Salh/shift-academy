@@ -120,7 +120,7 @@ window.SITE_CONTENT = {
       "a": "عن طريق واتساب من أي زر في الموقع."
     }
   ],
-  "version": 1,
+  "version": 2,
   "banner": {
     "image": "",
     "fit": "full",
