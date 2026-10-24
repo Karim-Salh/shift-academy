@@ -120,15 +120,15 @@ window.SITE_CONTENT = {
       "a": "عن طريق واتساب من أي زر في الموقع."
     }
   ],
-  "version": 8,
+  "version": 10,
   "banner": {
     "image": "uploads/mvmz2r3loq51.jpg",
     "fit": "cover",
-    "fx": 50,
-    "fy": 30,
+    "fx": 57.820111095285576,
+    "fy": 35.01010101010102,
     "zoom": 1,
     "textPos": "r",
-    "shade": 55
+    "shade": 17
   },
   "instructors": [
     {
