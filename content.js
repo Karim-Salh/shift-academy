@@ -1,7 +1,7 @@
 window.SITE_CONTENT = {
   "settings": {
     "name": "SHIFT Academy",
-    "waPhone": "",
+    "waPhone": "011060228572",
     "groupUrl": "",
     "email": "",
     "workshopDate": "",
@@ -120,7 +120,7 @@ window.SITE_CONTENT = {
       "a": "عن طريق واتساب من أي زر في الموقع."
     }
   ],
-  "version": 18,
+  "version": 19,
   "banner": {
     "image": "uploads/mvmz2r3loq51.jpg",
     "fit": "cover",
