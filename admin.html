@@ -76,9 +76,10 @@ input,select,textarea{font-size:16px;padding:9px}label{font-size:12px;margin:8px
 .av{max-width:120px;border-radius:18px}.ln{font-size:17px}.rl{font-size:12px}
 .hin h1{font-size:20px}.hin p{font-size:13px}.hin .cta .btn{font-size:12px;padding:8px 4px}.hin .pill{font-size:11px}.hin .chk{font-size:11px}.hb .bfr{min-height:400px}
 .nav{height:52px}.btn{font-size:13px}details{padding:10px 2px}summary{font-size:14px}details p{font-size:13px}.fm{padding:12px}.band{padding:20px 14px}footer{font-size:12px}}
+.bk{font-size:0!important;color:transparent!important}
 </style></head><body>
 <div id="login" class="wrap" style="max-width:400px;margin-top:12vh"><div class="card"><h2 style="margin-top:0">دخول الإدارة</h2><label for="pw">كلمة المرور</label><input id="pw" type="password" autocomplete="current-password"><div class="err" id="le"></div><button class="btn" id="lg" style="margin-top:14px;width:100%">دخول</button><p class="hint"><a href="index.html">العودة للموقع</a></p></div></div>
-<div id="app" style="display:none"><div class="top"><b>SHIFT Academy | لوحة التحكم</b><div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn o" id="vw" href="index.html">عرض الموقع</a><span class="hint" id="stt"></span><button class="btn" id="sv">حفظ</button><button class="btn o" id="dlb">تنزيل ملف المحتوى</button><button class="btn o" id="lo">خروج</button></div></div>
+<div id="app" style="display:none"><div class="top"><b>SHIFT Academy | لوحة التحكم</b><div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn o" id="vw" href="index.html">عرض الموقع</a><span class="hint" style="opacity:.55">v3</span><span class="hint" id="stt"></span><button class="btn" id="sv">حفظ</button><button class="btn o" id="dlb">تنزيل ملف المحتوى</button><button class="btn o" id="lo">خروج</button></div></div>
 <div id="nb" style="display:none;background:#fff7e0;padding:8px 12px;text-align:center;font-size:13px">غير مربوط بـ GitHub: التعديلات تُحفظ في متصفحك فقط. <a href="#" id="nbl">اربط الآن</a></div>
 <div class="wrap"><div class="tabs" id="tb"></div><div id="pn"></div></div></div><div id="st" role="status"></div>
 <script src="content.js"></script>
@@ -95,30 +96,42 @@ const apiU=p=>{const g=gh();return `https://api.github.com/repos/${g.owner}/${g.
 const hd=()=>({Authorization:'Bearer '+gh().token,Accept:'application/vnd.github+json'});
 let ghQ=Promise.resolve();
 function ghPut(path,b64,message){const run=()=>ghPut1(path,b64,message);const p=ghQ.then(run,run);ghQ=p.catch(()=>{});return p}
-async function ghPut1(path,b64,message){const g=gh(),br=g.branch||'main';let last='فشل غير معروف';
- for(let n=0;n<3;n++){let sha;const r0=await fetch(apiU(path)+'?ref='+encodeURIComponent(br)+'&_='+Date.now(),{headers:hd(),cache:'no-store'});if(r0.ok)sha=(await r0.json()).sha;
- const r=await fetch(apiU(path),{method:'PUT',headers:{...hd(),'Content-Type':'application/json'},body:JSON.stringify({message,content:b64,branch:br,sha})});
- if(r.ok)return;let m='HTTP '+r.status;try{m=(await r.json()).message||m}catch(x){}last=m;if(r.status!==409&&r.status!==422)break;await new Promise(z=>setTimeout(z,700*(n+1)))}
- throw new Error(last)}
+const shaMemo={};
+async function ghPut1(path,b64,message){const g=gh(),br=g.branch||'main';let last='فشل غير معروف',hint=null;const tried=new Set();
+ const getSha=async()=>{const r=await fetch(apiU(path)+'?ref='+encodeURIComponent(br)+'&_='+Date.now(),{headers:hd(),cache:'no-store'});return r.ok?(await r.json()).sha:undefined};
+ for(let n=0;n<5;n++){let sha;
+  if(n===0&&shaMemo[path]&&Date.now()-shaMemo[path].t<120000)sha=shaMemo[path].s;
+  else if(hint&&!tried.has(hint))sha=hint;
+  else sha=await getSha();
+  tried.add(sha);
+  const r=await fetch(apiU(path),{method:'PUT',headers:{...hd(),'Content-Type':'application/json'},body:JSON.stringify({message,content:b64,branch:br,sha})});
+  if(r.ok){try{const j=await r.json();if(j.content&&j.content.sha)shaMemo[path]={s:j.content.sha,t:Date.now()}}catch(x){}return}
+  let m='HTTP '+r.status;try{m=(await r.json()).message||m}catch(x){}last=m;
+  if(r.status!==409&&r.status!==422)break;
+  const hx=(m.match(/[0-9a-f]{40}/)||[])[0];hint=hx&&!tried.has(hx)?hx:null;delete shaMemo[path];
+  await new Promise(z=>setTimeout(z,900*(n+1)))}
+ throw new Error(last+' (تأكد أن لوحة الإدارة غير مفتوحة في تبويب أو جهاز آخر)')}
 async function remote(){if(!conn()||window.PREVIEW)return null;const g=gh();try{const r=await fetch(apiU(g.path||'content.js')+'?ref='+encodeURIComponent(g.branch||'main')+'&_='+Date.now(),{headers:hd(),cache:'no-store'});if(!r.ok)return null;const j=await r.json();const t=decodeURIComponent(escape(atob(j.content.replace(/\n/g,''))));return JSON.parse(t.slice(t.indexOf('=')+1).trim().replace(/;$/,''))}catch(x){return null}}
 function guess(){const h=location.hostname,m=h.match(/^(.+)\.github\.io$/);if(!m)return {};const ps=location.pathname.split('/').filter(Boolean);return {owner:m[1],repo:ps.length&&!/\.html?$/.test(ps[0])?ps[0]:h}}
 const setStat=t=>{const e=$('#stt');if(e)e.textContent=t};
 function updateNb(){$('#nb').style.display=(!conn()&&!window.PREVIEW)?'':'none'}
 const shrink=(f,mx=1200)=>new Promise((ok,no)=>{const i=new Image();i.onload=()=>{const s=Math.min(1,mx/i.width),c=document.createElement('canvas');c.width=Math.round(i.width*s);c.height=Math.round(i.height*s);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(i,0,0,c.width,c.height);ok(c.toDataURL('image/jpeg',.82))};i.onerror=()=>no(new Error('ملف الصورة غير صالح'));i.src=URL.createObjectURL(f)});
 //SH_START
+function imgErr(el){const n=(+el.dataset.r||0)+1;el.dataset.r=n;el.classList.add('bk');if(el.src.indexOf('data:')===0||n>8)return;const u=el.src.split('?')[0];setTimeout(()=>{el.classList.remove('bk');el.src=u+'?r='+Date.now()},8000)}
 function bFrame(b,x){const u=esc(b.image),fx=+b.fx,fy=+b.fy,px=isNaN(fx)?50:fx,py=isNaN(fy)?30:fy,z=+b.zoom||1,al=esc(b.title||'');
-return b.fit==='cover'?`<div class="bfr cov ${x||''}" style="--bi:url('${u}')"><img src="${u}" alt="${al}" draggable="false" style="object-position:${px}% ${py}%;transform:scale(${z});transform-origin:${px}% ${py}%"></div>`:`<div class="bfr full ${x||''}" style="--bi:url('${u}')"><img src="${u}" alt="${al}" draggable="false"></div>`}
+return b.fit==='cover'?`<div class="bfr cov ${x||''}" style="--bi:url('${u}')"><img src="${u}" alt="${al}" draggable="false" onerror="imgErr(this)" style="object-position:${px}% ${py}%;transform:scale(${z});transform-origin:${px}% ${py}%"></div>`:`<div class="bfr full ${x||''}" style="--bi:url('${u}')"><img src="${u}" alt="${al}" draggable="false" onerror="imgErr(this)"></div>`}
 function heroHTML(b,s,x){b=b||{};s=s||{};const sh=Math.max(0,Math.min(90,isNaN(+b.shade)?55:+b.shade))/100,pos=['l','c','r'].indexOf(b.textPos)>-1?b.textPos:'r';
 const fr=b.image?bFrame(b):'<div class="bfr ph"></div>';
 return `<div class="hb pos-${pos} ${x||''}" style="--s1:${sh};--s2:${(sh*0.5).toFixed(2)}">${fr}<div class="hov"><div class="hin"><span class="pill">أول حصة مجانية</span><h1>${esc(s.heroTitle)}</h1><p>${esc(s.heroText)}</p><div class="cta"><button class="btn" data-open="free">احجز حصتك التجريبية</button><a class="btn o" href="#courses">استكشف الكورسات</a><a class="btn t" data-wa href="#">اسألنا على واتساب</a></div><div class="chk"><span>تعليم عملي</span><span>شرح مبسط</span><span>مشروعات تطبيقية</span></div></div></div></div>`}
 const pos=v=>(v==null||v===''||isNaN(+v))?50:+v;
 const imgSt=o=>{const x=pos(o.ix),y=pos(o.iy),z=+o.iz>1?+o.iz:1;return `object-position:${x}% ${y}%;transform:scale(${z});transform-origin:${x}% ${y}%`};
-function thumb(c){return c.image?`<div class="cw"><img class="ci" src="${esc(c.image)}" alt="${esc(c.title)}" loading="lazy" style="${imgSt(c)}"></div>`:''}
+function thumb(c){return c.image?`<div class="cw"><img class="ci" src="${esc(c.image)}" alt="${esc(c.title)}" loading="lazy" onerror="imgErr(this)" style="${imgSt(c)}"></div>`:''}
 function cardHTML(x){return `<article class="cc">${thumb(x)}<div class="ctop"><span class="bdg">${esc(x.badge||'')}</span><span class="st st-${x.status==='متاح للتسجيل'?'on':'off'}">${esc(x.status)}</span></div><h3>${esc(x.title)}</h3><div class="lv">${esc(x.level)} &middot; ${esc(x.fmt)}</div><p>${esc(x.desc)}</p><ul>${(x.learn||[]).slice(0,3).map(l=>`<li>${esc(l)}</li>`).join('')}</ul><div class="meta"><span>${x.price?esc(x.price)+' ج.م':'السعر عند الاستفسار'}</span>${x.dur?'<span>'+esc(x.dur)+'</span>':''}</div><div class="row"><button class="btn full" data-q="free" data-id="${esc(x.id)}">احجز حصة مجانية</button><button class="btn o" data-d="${esc(x.id)}">التفاصيل</button><button class="btn o" data-q="info" data-id="${esc(x.id)}">استفسر</button></div></article>`}
-const insImg=x=>x.image?`<img src="${esc(x.image)}" alt="${esc(x.name||x.role)}" loading="lazy" style="${imgSt(x)}">`:'AI';
+const insImg=x=>x.image?`<img src="${esc(x.image)}" alt="${esc(x.name||x.role)}" loading="lazy" onerror="imgErr(this)" style="${imgSt(x)}">`:'AI';
 const insSingle=x=>`<div class="two"><div class="av">${insImg(x)}</div><div>${x.name?`<div class="ln">${esc(x.name)}</div>`:''}<div class="rl">${esc(x.role)}</div>${x.bio?`<p class="sub" style="margin:8px 0 14px">${esc(x.bio)}</p>`:''}${x.philosophy?`<p style="margin:0 0 6px"><b>فلسفة التدريس:</b> ${esc(x.philosophy)}</p>`:''}${x.areas?`<p style="margin:0 0 22px"><b>مجالات الخبرة:</b> ${esc(x.areas)}</p>`:''}<button class="btn" data-open="free">احجز حصة تجريبية</button></div></div>`;
 const insCard=x=>`<article class="ic"><div class="ph2">${insImg(x)}</div><div class="ib">${x.name?`<h3>${esc(x.name)}</h3>`:''}<div class="rl">${esc(x.role)}</div>${x.bio?`<p>${esc(x.bio)}</p>`:''}${x.areas?`<p><b>الخبرة:</b> ${esc(x.areas)}</p>`:''}</div></article>`;
 //SH_END
+const IC={};
 const S=[['name','اسم الأكاديمية'],['waPhone','رقم واتساب (مثال 201001234567 أو 01001234567)'],['groupUrl','رابط جروب الواتساب'],['email','البريد الإلكتروني'],['workshopDate','موعد الورشة المجانية (فارغ = قريبًا)'],['inquiry','رسالة الاستفسار الافتراضية','area'],['heroTitle','عنوان أول الصفحة'],['heroText','النص تحت العنوان','area'],['aboutTitle','عنوان قسم المدرب (يظهر لو مدرب واحد فقط)']];
 const INF=[['name','الاسم'],['role','الصفة (مثال: مهندس ذكاء اصطناعي، معلم برمجة)'],['areas','مجالات الخبرة'],['philosophy','فلسفة التدريس','area'],['bio','نبذة','area'],['image','الصورة','img'],['ix','موضع الصورة أفقيًا','range'],['iy','موضع الصورة رأسيًا','range'],['iz','تكبير الصورة (لقص جزء منها)','zoom'],['show','ظاهر في الموقع','bool']];
 const CF=[['title','اسم الكورس'],['cat','الفئة','sel:kids|python|web|ai'],['badge','رمز قصير يظهر على الغلاف (مثل Py)'],['level','المستوى'],['desc','الوصف','area'],['learn','ما سيتعلمه (سطر لكل نقطة)','lines'],['fmt','الأسلوب (مباشر / مسجل / مباشر ومسجل)'],['dur','المدة'],['price','السعر بالجنيه (أرقام فقط)'],['status','الحالة','sel:متاح للتسجيل|قريبًا|قائمة انتظار'],['pre','المتطلبات'],['image','صورة الكورس','img'],['ix','موضع الصورة أفقيًا في البطاقة','range'],['iy','موضع الصورة رأسيًا في البطاقة','range'],['iz','تكبير الصورة (لقص جزء منها)','zoom'],['show','ظاهر في الموقع','bool']];
@@ -128,12 +141,12 @@ function fld(o,[k,l,t='']){const id='f'+Math.random().toString(36).slice(2);let 
  else if(t==='bool')h=`<label><input type="checkbox" id="${id}" ${o[k]!==false?'checked':''}> ${l}</label>`;
  else if(t==='zoom')h+=`<input type="range" min="1" max="3" step="0.05" id="${id}" value="${o[k]>1?o[k]:1}">`;
  else if(t==='range')h+=`<input type="range" min="0" max="100" id="${id}" value="${o[k]==null||o[k]===''?50:o[k]}">`;
- else if(t==='img')h+=`<input id="${id}" value="${esc(o[k])}" placeholder="رابط الصورة"><input type="file" accept="image/*" data-up="${id}" style="margin-top:6px">${o[k]?`<img class="pv" src="${esc(o[k])}" alt="">`:''}<div class="hint">ارفع صورة أو الصق رابطًا.</div>`;
+ else if(t==='img')h+=`<input id="${id}" value="${esc(o[k])}" placeholder="رابط الصورة"><input type="file" accept="image/*" data-up="${id}" style="margin-top:6px">${o[k]?`<img class="pv" src="${esc(IC[o[k]]||o[k])}" alt="">`:''}<div class="hint">ارفع صورة أو الصق رابطًا.</div>`;
  else h+=`<input id="${id}" value="${esc(o[k])}">`;
  return {h,bind(){const el=document.getElementById(id);const f=()=>{o[k]=t==='bool'?el.checked:(t==='range'||t==='zoom')?+el.value:t==='lines'?el.value.split('\n').map(s=>s.trim()).filter(Boolean):el.value};el.addEventListener('input',f);el.addEventListener('change',f)}}}
 function form(o,fs){const a=fs.map(f=>fld(o,f));return {h:a.map(x=>x.h).join(''),bind:()=>a.forEach(x=>x.bind())}}
-function updPV(){document.querySelectorAll('[data-pvc]').forEach(el=>{const x=D.courses[+el.dataset.pvc];if(x)el.innerHTML='<div class="hint" style="margin-bottom:8px">معاينة البطاقة كما تظهر في الموقع</div>'+cardHTML(x)});
- const n=(D.instructors||[]).filter(x=>x.show!==false).length;document.querySelectorAll('[data-pvi]').forEach(el=>{const x=D.instructors[+el.dataset.pvi];if(!x)return;el.innerHTML='<div class="hint" style="margin-bottom:8px">معاينة كما تظهر في الموقع</div>'+(n===1&&x.show!==false?insSingle(x):'<div class="ig" style="max-width:300px">'+insCard(x)+'</div>')})}
+function updPV(){document.querySelectorAll('[data-pvc]').forEach(el=>{const x=D.courses[+el.dataset.pvc];if(x)el.innerHTML='<div class="hint" style="margin-bottom:8px">معاينة البطاقة كما تظهر في الموقع</div>'+cardHTML(Object.assign({},x,{image:IC[x.image]||x.image}))});
+ const n=(D.instructors||[]).filter(x=>x.show!==false).length;document.querySelectorAll('[data-pvi]').forEach(el=>{const x0=D.instructors[+el.dataset.pvi];if(!x0)return;const x=Object.assign({},x0,{image:IC[x0.image]||x0.image});el.innerHTML='<div class="hint" style="margin-bottom:8px">معاينة كما تظهر في الموقع</div>'+(n===1&&x.show!==false?insSingle(x):'<div class="ig" style="max-width:300px">'+insCard(x)+'</div>')})}
 function show(){$('#pn').oninput=null;document.querySelectorAll('#tb button').forEach(b=>b.classList.toggle('on',b.dataset.t===tab));const p=$('#pn');let binds=[];
  if(tab==='settings'){const f=form(D.settings,S);p.innerHTML=`<div class="card">${f.h}</div>`;binds.push(f.bind)}
  else if(tab==='courses'){p.innerHTML=D.courses.map((c,i)=>{const f=form(c,CF);binds.push(f.bind);return `<div class="card"><b>${esc(c.title||'كورس جديد')}</b><div class="g2">${f.h}</div><div class="pvbox" data-pvc="${i}"></div><div style="margin-top:12px;display:flex;gap:8px"><button class="btn o" data-m="up" data-i="${i}">أعلى</button><button class="btn o" data-m="dn" data-i="${i}">أسفل</button><button class="btn d" data-m="del" data-i="${i}">حذف</button></div></div>`}).join('')+'<button class="btn" data-m="add">إضافة كورس</button>'}
@@ -147,7 +160,7 @@ function show(){$('#pn').oninput=null;document.querySelectorAll('#tb button').fo
  <label for="bsh">درجة التظليل والتمويه خلف الكلام</label><input type="range" id="bsh" min="0" max="90"><div class="hint">زوّدها لو الكلام مش واضح على الصورة.</div></div>
  <div class="card"><b>معاينة كما سيراها الزائر</b><div id="bpv" style="margin-top:10px"></div><div class="hint">العنوان والنص بيتعدلوا من تبويب "الإعدادات والمحتوى".</div></div>`;
  binds.push(fi.bind);$('#bfit').value=B.fit;$('#bpos').value=B.textPos;$('#bsh').value=B.shade;$('#bz').value=B.zoom;$('#bx').value=B.fx;$('#by').value=B.fy;
- const rp=()=>{$('#bctl').style.display=B.fit==='cover'?'':'none';$('#bpv').innerHTML=`<div class="hint">الكمبيوتر</div>${heroHTML(B,D.settings,'dsk')}<div class="hint" style="margin-top:14px">الهاتف</div><div class="mobv">${heroHTML(B,D.settings,'mob')}</div>`};
+ const rp=()=>{$('#bctl').style.display=B.fit==='cover'?'':'none';$('#bpv').innerHTML=`<div class="hint">الكمبيوتر</div>${heroHTML(Object.assign({},B,{image:IC[B.image]||B.image}),D.settings,'dsk')}<div class="hint" style="margin-top:14px">الهاتف</div><div class="mobv">${heroHTML(Object.assign({},B,{image:IC[B.image]||B.image}),D.settings,'mob')}</div>`};
  $('#pn').oninput=e=>{const t=e.target;if(t.id==='bz')B.zoom=+t.value;if(t.id==='bx')B.fx=+t.value;if(t.id==='by')B.fy=+t.value;if(t.id==='bsh')B.shade=+t.value;rp()};
  $('#pn').onchange=async e=>{if(e.target.id==='bfit'){B.fit=e.target.value;rp();return}if(e.target.id==='bpos'){B.textPos=e.target.value;rp();return}upl(e)};
  $('#bpv').onclick=e=>{if(e.target.closest('a,button'))e.preventDefault()};
@@ -174,7 +187,7 @@ $('#pn').onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;const i=+
  else if(m==='iadd'){(D.instructors=D.instructors||[]).push({name:'',role:'معلم',bio:'',image:'',areas:'',philosophy:'',show:true})}else if(m==='idel'){if(!confirm('حذف هذا المدرب؟'))return;D.instructors.splice(i,1)}else if(m==='iup'&&i>0){const L=D.instructors;[L[i-1],L[i]]=[L[i],L[i-1]]}else if(m==='idn'&&i<D.instructors.length-1){const L=D.instructors;[L[i+1],L[i]]=[L[i],L[i+1]]} else if(m==='addq')D.faq.push({q:'',a:''});else if(m==='delq')D.faq.splice(i,1);show();queueSave()};
 async function upl(e){const f=e.target.dataset&&e.target.dataset.up,file=e.target.files&&e.target.files[0];if(!f||!file)return;
  try{setStat('جارٍ رفع الصورة…');const d=await shrink(file,tab==='banner'?1800:1200);let url=d;
- if(conn()&&!window.PREVIEW){url='uploads/'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)+'.jpg';await ghPut(url,d.split(',')[1],'Upload image')}
+ if(conn()&&!window.PREVIEW){url='uploads/'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)+'.jpg';await ghPut(url,d.split(',')[1],'Upload image');IC[url]=d}
  const t=document.getElementById(f);t.value=url;t.dispatchEvent(new Event('input'));clearTimeout(qt);await doSave(true);show()}catch(x){setStat('فشل رفع الصورة');msg('فشل رفع الصورة: '+x.message,false)}}
 $('#pn').onchange=upl;
 $('#pn').addEventListener('click',e=>{if(e.target.closest('[data-pvc],[data-pvi]')&&e.target.closest('a,button'))e.preventDefault()});

@@ -116,6 +116,7 @@ footer{padding:28px 0 84px;font-size:13px}.fgd{grid-template-columns:1fr 1fr;gap
 .av{max-width:120px;border-radius:18px}.ln{font-size:17px}.rl{font-size:12px}
 .hin h1{font-size:20px}.hin p{font-size:13px}.hin .cta .btn{font-size:12px;padding:8px 4px}.hin .pill{font-size:11px}.hin .chk{font-size:11px}.hb .bfr{min-height:400px}
 .nav{height:52px}.btn{font-size:13px}details{padding:10px 2px}summary{font-size:14px}details p{font-size:13px}.fm{padding:12px}.band{padding:20px 14px}footer{font-size:12px}}
+.bk{font-size:0!important;color:transparent!important}
 </style>
 </head>
 <body>
@@ -167,16 +168,17 @@ function normPhone(v){let p=String(v||'').replace(/\D/g,'');if(p.startsWith('00'
 function wa(m){const p=normPhone(C.settings.waPhone);if(p.length<10||p.length>15){toast('رقم واتساب غير مضبوط أو غير صحيح. أضفه من الإدارة ثم الإعدادات.');return false}go(`https://wa.me/${p}?text=${encodeURIComponent(m)}`);return true}
 const vis=()=>C.courses.filter(c=>c.show!==false);
 //SH_START
+function imgErr(el){const n=(+el.dataset.r||0)+1;el.dataset.r=n;el.classList.add('bk');if(el.src.indexOf('data:')===0||n>8)return;const u=el.src.split('?')[0];setTimeout(()=>{el.classList.remove('bk');el.src=u+'?r='+Date.now()},8000)}
 function bFrame(b,x){const u=esc(b.image),fx=+b.fx,fy=+b.fy,px=isNaN(fx)?50:fx,py=isNaN(fy)?30:fy,z=+b.zoom||1,al=esc(b.title||'');
-return b.fit==='cover'?`<div class="bfr cov ${x||''}" style="--bi:url('${u}')"><img src="${u}" alt="${al}" draggable="false" style="object-position:${px}% ${py}%;transform:scale(${z});transform-origin:${px}% ${py}%"></div>`:`<div class="bfr full ${x||''}" style="--bi:url('${u}')"><img src="${u}" alt="${al}" draggable="false"></div>`}
+return b.fit==='cover'?`<div class="bfr cov ${x||''}" style="--bi:url('${u}')"><img src="${u}" alt="${al}" draggable="false" onerror="imgErr(this)" style="object-position:${px}% ${py}%;transform:scale(${z});transform-origin:${px}% ${py}%"></div>`:`<div class="bfr full ${x||''}" style="--bi:url('${u}')"><img src="${u}" alt="${al}" draggable="false" onerror="imgErr(this)"></div>`}
 function heroHTML(b,s,x){b=b||{};s=s||{};const sh=Math.max(0,Math.min(90,isNaN(+b.shade)?55:+b.shade))/100,pos=['l','c','r'].indexOf(b.textPos)>-1?b.textPos:'r';
 const fr=b.image?bFrame(b):'<div class="bfr ph"></div>';
 return `<div class="hb pos-${pos} ${x||''}" style="--s1:${sh};--s2:${(sh*0.5).toFixed(2)}">${fr}<div class="hov"><div class="hin"><span class="pill">أول حصة مجانية</span><h1>${esc(s.heroTitle)}</h1><p>${esc(s.heroText)}</p><div class="cta"><button class="btn" data-open="free">احجز حصتك التجريبية</button><a class="btn o" href="#courses">استكشف الكورسات</a><a class="btn t" data-wa href="#">اسألنا على واتساب</a></div><div class="chk"><span>تعليم عملي</span><span>شرح مبسط</span><span>مشروعات تطبيقية</span></div></div></div></div>`}
 const pos=v=>(v==null||v===''||isNaN(+v))?50:+v;
 const imgSt=o=>{const x=pos(o.ix),y=pos(o.iy),z=+o.iz>1?+o.iz:1;return `object-position:${x}% ${y}%;transform:scale(${z});transform-origin:${x}% ${y}%`};
-function thumb(c){return c.image?`<div class="cw"><img class="ci" src="${esc(c.image)}" alt="${esc(c.title)}" loading="lazy" style="${imgSt(c)}"></div>`:''}
+function thumb(c){return c.image?`<div class="cw"><img class="ci" src="${esc(c.image)}" alt="${esc(c.title)}" loading="lazy" onerror="imgErr(this)" style="${imgSt(c)}"></div>`:''}
 function cardHTML(x){return `<article class="cc">${thumb(x)}<div class="ctop"><span class="bdg">${esc(x.badge||'')}</span><span class="st st-${x.status==='متاح للتسجيل'?'on':'off'}">${esc(x.status)}</span></div><h3>${esc(x.title)}</h3><div class="lv">${esc(x.level)} &middot; ${esc(x.fmt)}</div><p>${esc(x.desc)}</p><ul>${(x.learn||[]).slice(0,3).map(l=>`<li>${esc(l)}</li>`).join('')}</ul><div class="meta"><span>${x.price?esc(x.price)+' ج.م':'السعر عند الاستفسار'}</span>${x.dur?'<span>'+esc(x.dur)+'</span>':''}</div><div class="row"><button class="btn full" data-q="free" data-id="${esc(x.id)}">احجز حصة مجانية</button><button class="btn o" data-d="${esc(x.id)}">التفاصيل</button><button class="btn o" data-q="info" data-id="${esc(x.id)}">استفسر</button></div></article>`}
-const insImg=x=>x.image?`<img src="${esc(x.image)}" alt="${esc(x.name||x.role)}" loading="lazy" style="${imgSt(x)}">`:'AI';
+const insImg=x=>x.image?`<img src="${esc(x.image)}" alt="${esc(x.name||x.role)}" loading="lazy" onerror="imgErr(this)" style="${imgSt(x)}">`:'AI';
 const insSingle=x=>`<div class="two"><div class="av">${insImg(x)}</div><div>${x.name?`<div class="ln">${esc(x.name)}</div>`:''}<div class="rl">${esc(x.role)}</div>${x.bio?`<p class="sub" style="margin:8px 0 14px">${esc(x.bio)}</p>`:''}${x.philosophy?`<p style="margin:0 0 6px"><b>فلسفة التدريس:</b> ${esc(x.philosophy)}</p>`:''}${x.areas?`<p style="margin:0 0 22px"><b>مجالات الخبرة:</b> ${esc(x.areas)}</p>`:''}<button class="btn" data-open="free">احجز حصة تجريبية</button></div></div>`;
 const insCard=x=>`<article class="ic"><div class="ph2">${insImg(x)}</div><div class="ib">${x.name?`<h3>${esc(x.name)}</h3>`:''}<div class="rl">${esc(x.role)}</div>${x.bio?`<p>${esc(x.bio)}</p>`:''}${x.areas?`<p><b>الخبرة:</b> ${esc(x.areas)}</p>`:''}</div></article>`;
 //SH_END
