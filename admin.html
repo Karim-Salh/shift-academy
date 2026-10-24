@@ -93,10 +93,14 @@ const u8=s=>btoa(unescape(encodeURIComponent(s)));
 const conn=()=>{const g=gh();return !!(g.owner&&g.repo&&g.token)};
 const apiU=p=>{const g=gh();return `https://api.github.com/repos/${g.owner}/${g.repo}/contents/${p}`};
 const hd=()=>({Authorization:'Bearer '+gh().token,Accept:'application/vnd.github+json'});
-async function ghPut(path,b64,message){const g=gh(),br=g.branch||'main';let sha;const r0=await fetch(apiU(path)+'?ref='+encodeURIComponent(br),{headers:hd()});if(r0.ok)sha=(await r0.json()).sha;
+let ghQ=Promise.resolve();
+function ghPut(path,b64,message){const run=()=>ghPut1(path,b64,message);const p=ghQ.then(run,run);ghQ=p.catch(()=>{});return p}
+async function ghPut1(path,b64,message){const g=gh(),br=g.branch||'main';let last='فشل غير معروف';
+ for(let n=0;n<3;n++){let sha;const r0=await fetch(apiU(path)+'?ref='+encodeURIComponent(br)+'&_='+Date.now(),{headers:hd(),cache:'no-store'});if(r0.ok)sha=(await r0.json()).sha;
  const r=await fetch(apiU(path),{method:'PUT',headers:{...hd(),'Content-Type':'application/json'},body:JSON.stringify({message,content:b64,branch:br,sha})});
- if(!r.ok){let m='HTTP '+r.status;try{m=(await r.json()).message||m}catch(x){}throw new Error(m)}}
-async function remote(){if(!conn()||window.PREVIEW)return null;const g=gh();try{const r=await fetch(apiU(g.path||'content.js')+'?ref='+encodeURIComponent(g.branch||'main'),{headers:hd()});if(!r.ok)return null;const j=await r.json();const t=decodeURIComponent(escape(atob(j.content.replace(/\n/g,''))));return JSON.parse(t.slice(t.indexOf('=')+1).trim().replace(/;$/,''))}catch(x){return null}}
+ if(r.ok)return;let m='HTTP '+r.status;try{m=(await r.json()).message||m}catch(x){}last=m;if(r.status!==409&&r.status!==422)break;await new Promise(z=>setTimeout(z,700*(n+1)))}
+ throw new Error(last)}
+async function remote(){if(!conn()||window.PREVIEW)return null;const g=gh();try{const r=await fetch(apiU(g.path||'content.js')+'?ref='+encodeURIComponent(g.branch||'main')+'&_='+Date.now(),{headers:hd(),cache:'no-store'});if(!r.ok)return null;const j=await r.json();const t=decodeURIComponent(escape(atob(j.content.replace(/\n/g,''))));return JSON.parse(t.slice(t.indexOf('=')+1).trim().replace(/;$/,''))}catch(x){return null}}
 function guess(){const h=location.hostname,m=h.match(/^(.+)\.github\.io$/);if(!m)return {};const ps=location.pathname.split('/').filter(Boolean);return {owner:m[1],repo:ps.length&&!/\.html?$/.test(ps[0])?ps[0]:h}}
 const setStat=t=>{const e=$('#stt');if(e)e.textContent=t};
 function updateNb(){$('#nb').style.display=(!conn()&&!window.PREVIEW)?'':'none'}
